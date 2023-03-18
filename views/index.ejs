@@ -1,0 +1,90 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <title>Document</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.2.2/axios.js"></script>
+</head>
+
+<body>
+    <div id="chatbox">
+    <div id="users">
+        <h1>USERS</h1>
+    </div>
+    <div id="msgbox" >
+        <div id="msgss"></div>
+        <form id="msg">
+            <input id="msginput"name="message" placeholder="Message..."/>
+            <button id="send" type="submit">SEND</button>
+        </form>
+    </div>
+    </div>
+    <script>
+        var socket = io("http://localhost:3000");
+        var link=`http://localhost:2003`;
+        
+        const userName = prompt("enter username")
+        socket.emit('userAdd', userName);
+        let sender = userName;
+        let receiver = ""
+        const div = document.getElementById("users");
+        socket.on("userAdded", data => {
+            // div.childNodes.forEach(e => {div.remove(e)})
+            for (const key in data) {
+               const p = document.createElement("p");
+               p.innerText = key;
+               p.style.color="white";
+               p.style.border="1px solid rgb(68, 68, 68)";
+               p.style.padding=".5rem";
+               p.style.width="100%";
+               p.style.borderLeft="none";
+               p.style.borderRight="none";
+               div.insertAdjacentElement("beforeend",p)
+               p.addEventListener("click", () => {
+                   receiver = p.innerText;
+               })
+            }
+        })
+        const msgss=document.getElementById("msgss");
+        const form = document.getElementById("msg");
+        form.addEventListener("submit",async (e) => {
+            e.preventDefault();
+            const content = form.message.value;
+            const p = document.createElement("p");
+            p.innerHTML=content;
+            p.style.color="white";
+            p.style.padding=".4rem";
+            p.style.borderRadius="5px";
+            p.style.backgroundColor="rgb(170, 0, 255)";
+            p.style.margin=".3rem";
+            p.style.float="right";
+            p.style.clear="both";
+            msgss.insertAdjacentElement("beforeend",p);
+            form.message.value=" ";
+            msgss.scrollTop = msgss.scrollHeight;
+            socket.emit("sendMessage",{sender, receiver,content})
+
+            const res = await axios.post(link,{sender :sender,receiver : receiver,message :content})
+            console.log(res);
+        })
+        socket.on("messageReceived",data=>{
+            console.log(data);
+            const p = document.createElement("p");
+            p.innerHTML=data.content;
+            p.style.color="white";
+            p.style.padding=".4rem";
+            p.style.borderRadius="5px";
+            p.style.margin=".3rem";
+            p.style.backgroundColor="rgb(79, 78, 78)";
+            p.style.float="left";
+            p.style.clear="both";
+            msgss.insertAdjacentElement("beforeend",p)
+        })
+    </script>
+</body>
+
+</html>
